@@ -1,0 +1,114 @@
+plugins {
+    id("org.sonarqube") version "4.4.1.3373"
+    id("io.github.oleksiiparf.slack-webhook") version "1.0.0"
+    id 'java'
+    id 'jacoco'
+    id 'maven-publish'
+    id "com.github.spacialcircumstances.gradle-cucumber-reporting" version "0.1.25"
+}
+
+
+cucumberReports {
+    outputDir = file('build/reports/cucumber/report.html')
+    buildId = '0'
+    reports = files('reports/example-report.json')
+}
+
+
+
+
+
+
+
+
+task generateMatrixAPI (type:Copy) {
+    from 'build/reports/', 'build/docs/' , 'build/libs'
+    into 'MatrixRelease/Matrix_v_1.0'
+}
+
+generateMatrixAPI.dependsOn(build,javadoc)
+
+test.finalizedBy "jacocoTestReport" , "generateMatrixAPI", "javadoc"
+
+
+
+group = 'com.example.model'
+version = '0.1-LAISSAOUI'
+
+publishing {
+    repositories {
+        maven {
+            url 'https://mymavenrepo.com/repo/cEmjfkxugPlzLxXg1A2B/'
+            credentials {
+                username 'myMavenRepo'
+                password 'test0005'
+        }
+        }
+    }
+
+    publications {
+        maven(MavenPublication) {
+            from components.java
+        }
+    }
+}
+
+
+
+repositories {
+        mavenCentral()
+    }
+slack {
+    publishedPlugin {
+        webHook = "https://hooks.slack.com/services/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"
+        attachment {
+            fallback = "New version successfully published."
+            pretext = "New version successfully published."
+            color = "good"
+            field {
+                title = "Module"
+                value = project.name
+                shortValue = true
+            }
+            field {
+                title = "Version"
+                value = project.version
+                shortValue = true
+            }
+        }
+        attachment {
+            fallback = "Another line on sent together."
+            pretext = "Another line on sent together."
+            color = "good"
+            field {
+                title = "Something"
+                value = "Something text"
+            }
+        }
+    }
+    builtSucceed {
+        webHook = "https://hooks.slack.com/services/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"
+        attachment {
+            fallback = "Project successfully built."
+            pretext = "Project successfully built."
+            field {
+                title = "Module"
+                value = project.name
+                shortValue = true
+            }
+            field {
+                title = "Version"
+                value = project.version
+                shortValue = true
+            }
+        }
+    }
+}
+generateMatrixAPI.finalizedBy "publish", "postBuiltSucceedToSlack"
+dependencies {
+    implementation group: 'org.sonarsource.sonarqube', name: 'sonarqube', version: '6.7.7'
+    testImplementation 'io.cucumber:cucumber-java:6.0.0'
+    testImplementation 'io.cucumber:cucumber-junit:6.0.0'
+    testImplementation'junit:junit:4.12'
+}
+
